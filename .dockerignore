@@ -1,0 +1,48 @@
+# .NET Core
+**/bin/
+**/obj/
+**/out/
+
+# Visual Studio files
+**/.vs/
+**/*.user
+**/*.userosscache
+**/*.dbmdl
+**/*.jfm
+**/launchSettings.json
+
+# Build results
+**/[Dd]ebug/
+**/[Dd]ebugPublic/
+**/[Rr]elease/
+**/[Rr]eleases/
+**/x64/
+**/x86/
+**/build/
+**/bld/
+**/[Bb]in/
+**/[Oo]bj/
+**/[Ll]og/
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose.yml
+docker-compose.*.yml
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Node.js
+**/node_modules/
+**/npm-debug.log
+
+# Logs
+**/*.log
+
+# Others
+**/.DS_Store
+**/*.swp
+**/*.bak

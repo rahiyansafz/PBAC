@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # SQL Server service
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: access-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Strong_Password123!
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    networks:
+      - access-network
+    restart: unless-stopped
+
+  # SMTP service for email features (using MailHog for development)
+  mailhog:
+    image: mailhog/mailhog
+    container_name: access-mailhog
+    ports:
+      - "1025:1025"  # SMTP port
+      - "8025:8025"  # Web UI port
+    networks:
+      - access-network
+    restart: unless-stopped
+
+  # API service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: access-api
+    depends_on:
+      - sqlserver  # Simple dependency without health check condition
+    ports:
+      - "8080:80"
+      - "8443:443"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80;https://+:443
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=AccessManagement;User Id=sa;Password=Strong_Password123!;TrustServerCertificate=True;MultipleActiveResultSets=true;
+      - Jwt__Key=MySecretSecurityKey123456789012345678901234
+      - Jwt__Issuer=AccessManagement
+      - Jwt__Audience=AccessManagementClient
+      - Email__From=noreply@example.com
+      - Email__SmtpServer=mailhog
+      - Email__SmtpPort=1025
+      - Email__Username=
+      - Email__Password=
+      - Email__EnableSsl=false
+      - Application__BaseUrl=http://localhost:8080
+    volumes:
+      - api-logs:/app/logs
+    networks:
+      - access-network
+    restart: unless-stopped
+    command: ["/bin/bash", "-c", "/wait-for-it.sh sqlserver:1433 -t 120 && dotnet AccessManagementAPI.dll"]
+
+volumes:
+  sqlserver-data:
+  api-logs:
+
+networks:
+  access-network:
+    driver: bridge
