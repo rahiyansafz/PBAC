@@ -6,8 +6,8 @@ namespace AccessManagementAPI.Core.Authorization;
 public class PermissionAuthorizationPolicyProvider : DefaultAuthorizationPolicyProvider
 {
     private const string PERMISSION_POLICY_PREFIX = "Permission";
-        
-    public PermissionAuthorizationPolicyProvider(IOptions<AuthorizationOptions> options) 
+
+    public PermissionAuthorizationPolicyProvider(IOptions<AuthorizationOptions> options)
         : base(options)
     {
     }
@@ -22,7 +22,7 @@ public class PermissionAuthorizationPolicyProvider : DefaultAuthorizationPolicyP
 
         // Extract the permission name from the policy name
         var permissionName = policyName.Substring(PERMISSION_POLICY_PREFIX.Length);
-            
+
         // Create a policy with the permission requirement
         var policy = new AuthorizationPolicyBuilder()
             .AddRequirements(new PermissionRequirement(permissionName))

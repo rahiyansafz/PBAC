@@ -171,3 +171,4 @@ D:\Codes\AccessManagementAPI\AccessManagement\AccessManagementAPI\obj\Debug\net8
 D:\Codes\AccessManagementAPI\AccessManagement\AccessManagementAPI\obj\Debug\net8.0\AccessManagementAPI.genruntimeconfig.cache
 D:\Codes\AccessManagementAPI\AccessManagement\AccessManagementAPI\obj\Debug\net8.0\ref\AccessManagementAPI.dll
 D:\Codes\AccessManagementAPI\AccessManagement\AccessManagementAPI\bin\Debug\net8.0\BCrypt.Net-Next.dll
+D:\Codes\AccessManagementAPI\AccessManagement\AccessManagementAPI\obj\Debug\net8.0\AccessManagementAPI.sourcelink.json

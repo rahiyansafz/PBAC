@@ -12,14 +12,14 @@ public static class ServiceCollectionExtensions
         // Register DbContext
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
-            
+
         // Register repositories
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IPermissionRepository, PermissionRepository>();
         services.AddScoped<IMenuItemRepository, MenuItemRepository>();
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-            
+
         return services;
     }
 }

@@ -11,14 +11,14 @@ public static class ServiceCollectionExtensions
         // Register services
         services.AddScoped<IPermissionService, PermissionService>();
         services.AddScoped<IRoleService, RoleService>();
-        services.AddScoped<IEmailService, Infrastructure.Services.EmailService>();
-            
+        services.AddScoped<IEmailService, EmailService>();
+
         // Register authorization handler
         services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
-            
+
         // Register authorization policy provider
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
-            
+
         return services;
     }
 }

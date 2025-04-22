@@ -55,12 +55,12 @@ public class RoleRepository : Repository<Role>, IRoleRepository
             await _context.SaveChangesAsync();
         }
     }
-    
+
     public async Task AddUserToRoleAsync(int userId, int roleId)
     {
         var exists = await _context.UserRoles
             .AnyAsync(ur => ur.UserId == userId && ur.RoleId == roleId);
-                
+
         if (!exists)
         {
             await _context.UserRoles.AddAsync(new UserRole
@@ -68,7 +68,7 @@ public class RoleRepository : Repository<Role>, IRoleRepository
                 UserId = userId,
                 RoleId = roleId
             });
-                
+
             await _context.SaveChangesAsync();
         }
     }
