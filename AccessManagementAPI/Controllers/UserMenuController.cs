@@ -9,26 +9,16 @@ namespace AccessManagementAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class UserMenuController : ControllerBase
+public class UserMenuController(IPermissionService permissionService) : ControllerBase
 {
-    private readonly IPermissionService _permissionService;
-
-    public UserMenuController(IPermissionService permissionService)
-    {
-        _permissionService = permissionService;
-    }
-
     // GET: api/usermenu
     [HttpGet]
     public async Task<ActionResult<IEnumerable<MenuItem>>> GetUserMenu()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-        {
-            return Unauthorized();
-        }
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId)) return Unauthorized();
 
-        var menuItems = await _permissionService.GetAuthorizedMenuItemsAsync(userId);
+        var menuItems = await permissionService.GetAuthorizedMenuItemsAsync(userId);
         return Ok(menuItems);
     }
 }

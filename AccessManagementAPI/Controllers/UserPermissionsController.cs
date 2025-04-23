@@ -9,26 +9,16 @@ namespace AccessManagementAPI.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
-public class UserPermissionsController : ControllerBase
+public class UserPermissionsController(IPermissionService permissionService) : ControllerBase
 {
-    private readonly IPermissionService _permissionService;
-
-    public UserPermissionsController(IPermissionService permissionService)
-    {
-        _permissionService = permissionService;
-    }
-
     // GET: api/userpermissions
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Permission>>> GetUserPermissions()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-        {
-            return Unauthorized();
-        }
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId)) return Unauthorized();
 
-        var permissions = await _permissionService.GetUserPermissionsAsync(userId);
+        var permissions = await permissionService.GetUserPermissionsAsync(userId);
         return Ok(permissions);
     }
 
@@ -37,12 +27,9 @@ public class UserPermissionsController : ControllerBase
     public async Task<ActionResult<IEnumerable<string>>> GetUserPermissionNames()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-        {
-            return Unauthorized();
-        }
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId)) return Unauthorized();
 
-        var permissionNames = await _permissionService.GetUserPermissionNamesAsync(userId);
+        var permissionNames = await permissionService.GetUserPermissionNamesAsync(userId);
         return Ok(permissionNames);
     }
 
@@ -51,12 +38,9 @@ public class UserPermissionsController : ControllerBase
     public async Task<ActionResult<bool>> CheckPermission(string permissionName)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-        {
-            return Unauthorized();
-        }
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId)) return Unauthorized();
 
-        var hasPermission = await _permissionService.HasPermissionAsync(userId, permissionName);
+        var hasPermission = await permissionService.HasPermissionAsync(userId, permissionName);
         return Ok(hasPermission);
     }
 }

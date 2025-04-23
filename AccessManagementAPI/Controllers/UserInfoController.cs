@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using AccessManagementAPI.Core.Interfaces;
 using AccessManagementAPI.Core.Services;
+using AccessManagementAPI.Dtos.UserInfo;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -11,24 +12,14 @@ namespace AccessManagementAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UserInfoController : ControllerBase
+public class UserInfoController(
+    IUserRepository userRepository,
+    IPermissionService permissionService,
+    IConfiguration configuration)
+    : ControllerBase
 {
-    private readonly IUserRepository _userRepository;
-    private readonly IPermissionService _permissionService;
-    private readonly IConfiguration _configuration;
-
-    public UserInfoController(
-        IUserRepository userRepository,
-        IPermissionService permissionService,
-        IConfiguration configuration)
-    {
-        _userRepository = userRepository;
-        _permissionService = permissionService;
-        _configuration = configuration;
-    }
-
     /// <summary>
-    /// Validates the token and returns user information if token is valid
+    ///     Validates the token and returns user information if token is valid
     /// </summary>
     /// <returns>User information including permissions</returns>
     [HttpGet("me")]
@@ -37,19 +28,14 @@ public class UserInfoController : ControllerBase
     {
         // If we reach this point, the token is valid (Authorization attribute ensures this)
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-        {
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
             return Unauthorized("Invalid token");
-        }
 
-        var user = await _userRepository.GetUserWithRolesAsync(userId);
-        if (user == null)
-        {
-            return NotFound("User not found");
-        }
+        var user = await userRepository.GetUserWithRolesAsync(userId);
+        if (user == null) return NotFound("User not found");
 
         // Get user permissions
-        var permissions = await _permissionService.GetUserPermissionNamesAsync(userId);
+        var permissions = await permissionService.GetUserPermissionNamesAsync(userId);
 
         // Get user roles
         var roles = user.UserRoles.Select(ur => ur.Role.SystemName).ToList();
@@ -67,7 +53,7 @@ public class UserInfoController : ControllerBase
     }
 
     /// <summary>
-    /// Validates a token without requiring it in the Authorization header
+    ///     Validates a token without requiring it in the Authorization header
     /// </summary>
     /// <param name="token">The JWT token to validate</param>
     /// <returns>User information if token is valid</returns>
@@ -75,16 +61,13 @@ public class UserInfoController : ControllerBase
     [AllowAnonymous]
     public async Task<ActionResult<UserInfoResponse>> ValidateToken([FromBody] ValidateTokenRequest request)
     {
-        if (string.IsNullOrEmpty(request.Token))
-        {
-            return BadRequest("Token is required");
-        }
+        if (string.IsNullOrEmpty(request.Token)) return BadRequest("Token is required");
 
         try
         {
             // Manually validate the token
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]);
+            var key = Encoding.UTF8.GetBytes(configuration["Jwt:Key"] ?? string.Empty);
 
             var validationParameters = new TokenValidationParameters
             {
@@ -92,8 +75,8 @@ public class UserInfoController : ControllerBase
                 ValidateAudience = true,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
-                ValidIssuer = _configuration["Jwt:Issuer"],
-                ValidAudience = _configuration["Jwt:Audience"],
+                ValidIssuer = configuration["Jwt:Issuer"],
+                ValidAudience = configuration["Jwt:Audience"],
                 IssuerSigningKey = new SymmetricSecurityKey(key)
             };
 
@@ -102,19 +85,14 @@ public class UserInfoController : ControllerBase
 
             // Get user ID from the token
             var userIdClaim = principal.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
-            {
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out var userId))
                 return Unauthorized("Invalid token");
-            }
 
-            var user = await _userRepository.GetUserWithRolesAsync(userId);
-            if (user == null)
-            {
-                return NotFound("User not found");
-            }
+            var user = await userRepository.GetUserWithRolesAsync(userId);
+            if (user == null) return NotFound("User not found");
 
             // Get user permissions
-            var permissions = await _permissionService.GetUserPermissionNamesAsync(userId);
+            var permissions = await permissionService.GetUserPermissionNamesAsync(userId);
 
             // Get user roles
             var roles = user.UserRoles.Select(ur => ur.Role.SystemName).ToList();
@@ -135,20 +113,4 @@ public class UserInfoController : ControllerBase
             return Unauthorized("Invalid token");
         }
     }
-}
-
-public class UserInfoResponse
-{
-    public int Id { get; set; }
-    public string Username { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public bool IsActive { get; set; }
-    public bool EmailConfirmed { get; set; }
-    public List<string> Roles { get; set; } = new List<string>();
-    public List<string> Permissions { get; set; } = new List<string>();
-}
-
-public class ValidateTokenRequest
-{
-    public string Token { get; set; } = string.Empty;
 }

@@ -5,12 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AccessManagementAPI.Core.Repositories;
 
-public class MenuItemRepository : Repository<MenuItem>, IMenuItemRepository
+public class MenuItemRepository(ApplicationDbContext context) : Repository<MenuItem>(context), IMenuItemRepository
 {
-    public MenuItemRepository(ApplicationDbContext context) : base(context)
-    {
-    }
-
     public async Task<IEnumerable<MenuItem>> GetVisibleMenuItemsForRoleAsync(int roleId)
     {
         // Get role permissions

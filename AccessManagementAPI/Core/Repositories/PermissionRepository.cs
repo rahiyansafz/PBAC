@@ -5,12 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AccessManagementAPI.Core.Repositories;
 
-public class PermissionRepository : Repository<Permission>, IPermissionRepository
+public class PermissionRepository(ApplicationDbContext context) : Repository<Permission>(context), IPermissionRepository
 {
-    public PermissionRepository(ApplicationDbContext context) : base(context)
-    {
-    }
-
     public async Task<IEnumerable<Permission>> GetPermissionsByCategoryAsync(string category)
     {
         return await _context.Permissions

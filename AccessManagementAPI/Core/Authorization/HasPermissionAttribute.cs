@@ -2,12 +2,7 @@
 
 namespace AccessManagementAPI.Core.Authorization;
 
-public class HasPermissionAttribute : AuthorizeAttribute
+public class HasPermissionAttribute(string permission) : AuthorizeAttribute(PERMISSION_POLICY_PREFIX + permission)
 {
     private const string PERMISSION_POLICY_PREFIX = "Permission";
-
-    public HasPermissionAttribute(string permission)
-        : base(PERMISSION_POLICY_PREFIX + permission)
-    {
-    }
 }

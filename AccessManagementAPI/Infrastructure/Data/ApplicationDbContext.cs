@@ -3,13 +3,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AccessManagementAPI.Infrastructure.Data;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-        : base(options)
-    {
-    }
-
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<Role> Roles { get; set; } = null!;
     public DbSet<Permission> Permissions { get; set; } = null!;
@@ -89,57 +84,57 @@ public class ApplicationDbContext : DbContext
         var permissions = new List<Permission>
         {
             // User management permissions
-            new Permission
+            new()
             {
                 Id = 1, Name = "View Users", SystemName = "users.view", Description = "Permission to view users",
                 Category = "Users", Action = "Read", Resource = "User"
             },
-            new Permission
+            new()
             {
                 Id = 2, Name = "Create Users", SystemName = "users.create", Description = "Permission to create users",
                 Category = "Users", Action = "Create", Resource = "User"
             },
-            new Permission
+            new()
             {
                 Id = 3, Name = "Edit Users", SystemName = "users.edit", Description = "Permission to edit users",
                 Category = "Users", Action = "Update", Resource = "User"
             },
-            new Permission
+            new()
             {
                 Id = 4, Name = "Delete Users", SystemName = "users.delete", Description = "Permission to delete users",
                 Category = "Users", Action = "Delete", Resource = "User"
             },
 
             // Role management permissions
-            new Permission
+            new()
             {
                 Id = 5, Name = "View Roles", SystemName = "roles.view", Description = "Permission to view roles",
                 Category = "Roles", Action = "Read", Resource = "Role"
             },
-            new Permission
+            new()
             {
                 Id = 6, Name = "Create Roles", SystemName = "roles.create", Description = "Permission to create roles",
                 Category = "Roles", Action = "Create", Resource = "Role"
             },
-            new Permission
+            new()
             {
                 Id = 7, Name = "Edit Roles", SystemName = "roles.edit", Description = "Permission to edit roles",
                 Category = "Roles", Action = "Update", Resource = "Role"
             },
-            new Permission
+            new()
             {
                 Id = 8, Name = "Delete Roles", SystemName = "roles.delete", Description = "Permission to delete roles",
                 Category = "Roles", Action = "Delete", Resource = "Role"
             },
 
             // Permission management permissions
-            new Permission
+            new()
             {
                 Id = 9, Name = "View Permissions", SystemName = "permissions.view",
                 Description = "Permission to view permissions", Category = "Permissions", Action = "Read",
                 Resource = "Permission"
             },
-            new Permission
+            new()
             {
                 Id = 10, Name = "Assign Permissions", SystemName = "permissions.assign",
                 Description = "Permission to assign permissions to roles", Category = "Permissions", Action = "Update",
@@ -147,23 +142,23 @@ public class ApplicationDbContext : DbContext
             },
 
             // Result management permissions
-            new Permission
+            new()
             {
                 Id = 11, Name = "View Results", SystemName = "results.view", Description = "Permission to view results",
                 Category = "Results", Action = "Read", Resource = "Result"
             },
-            new Permission
+            new()
             {
                 Id = 12, Name = "Create Results", SystemName = "results.create",
                 Description = "Permission to create results", Category = "Results", Action = "Create",
                 Resource = "Result"
             },
-            new Permission
+            new()
             {
                 Id = 13, Name = "Edit Results", SystemName = "results.edit", Description = "Permission to edit results",
                 Category = "Results", Action = "Update", Resource = "Result"
             },
-            new Permission
+            new()
             {
                 Id = 14, Name = "Delete Results", SystemName = "results.delete",
                 Description = "Permission to delete results", Category = "Results", Action = "Delete",
@@ -171,7 +166,7 @@ public class ApplicationDbContext : DbContext
             },
 
             // Menu management permissions
-            new Permission
+            new()
             {
                 Id = 15, Name = "Manage Menus", SystemName = "menus.manage",
                 Description = "Permission to manage menu items", Category = "System", Action = "Update",
@@ -183,15 +178,13 @@ public class ApplicationDbContext : DbContext
 
         // Assign all permissions to Admin role
         var adminRolePermissions = new List<RolePermission>();
-        for (int i = 0; i < permissions.Count; i++)
-        {
+        for (var i = 0; i < permissions.Count; i++)
             adminRolePermissions.Add(new RolePermission
             {
                 Id = i + 1,
                 RoleId = 1, // Admin role
                 PermissionId = i + 1
             });
-        }
 
         modelBuilder.Entity<RolePermission>().HasData(adminRolePermissions);
 

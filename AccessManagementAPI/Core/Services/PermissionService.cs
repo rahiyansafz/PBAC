@@ -4,30 +4,19 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace AccessManagementAPI.Core.Services;
 
-public class PermissionService : IPermissionService
+public class PermissionService(
+    IUserRepository userRepository,
+    IRoleRepository roleRepository,
+    IPermissionRepository permissionRepository,
+    IMenuItemRepository menuItemRepository,
+    IMemoryCache cache)
+    : IPermissionService
 {
-    private readonly IUserRepository _userRepository;
-    private readonly IRoleRepository _roleRepository;
-    private readonly IPermissionRepository _permissionRepository;
-    private readonly IMenuItemRepository _menuItemRepository;
-    private readonly IMemoryCache _cache;
     private const string PERMISSION_CACHE_KEY_PREFIX = "user_permissions_";
     private const string MENU_CACHE_KEY_PREFIX = "user_menus_";
     private static readonly TimeSpan CACHE_DURATION = TimeSpan.FromMinutes(10);
-
-    public PermissionService(
-        IUserRepository userRepository,
-        IRoleRepository roleRepository,
-        IPermissionRepository permissionRepository,
-        IMenuItemRepository menuItemRepository,
-        IMemoryCache cache)
-    {
-        _userRepository = userRepository;
-        _roleRepository = roleRepository;
-        _permissionRepository = permissionRepository;
-        _menuItemRepository = menuItemRepository;
-        _cache = cache;
-    }
+    private readonly IPermissionRepository _permissionRepository = permissionRepository;
+    private readonly IRoleRepository _roleRepository = roleRepository;
 
     public async Task<bool> AuthorizeAsync(int userId, string permissionSystemName)
     {
@@ -46,15 +35,15 @@ public class PermissionService : IPermissionService
 
     public async Task<IEnumerable<Permission>> GetUserPermissionsAsync(int userId)
     {
-        string cacheKey = $"{PERMISSION_CACHE_KEY_PREFIX}{userId}";
+        var cacheKey = $"{PERMISSION_CACHE_KEY_PREFIX}{userId}";
 
-        if (!_cache.TryGetValue(cacheKey, out IEnumerable<Permission> permissions))
+        if (!cache.TryGetValue(cacheKey, out IEnumerable<Permission> permissions))
         {
-            permissions = await _userRepository.GetUserPermissionsAsync(userId);
-            _cache.Set(cacheKey, permissions, CACHE_DURATION);
+            permissions = await userRepository.GetUserPermissionsAsync(userId);
+            cache.Set(cacheKey, permissions, CACHE_DURATION);
         }
 
-        return permissions;
+        return permissions ?? Array.Empty<Permission>();
     }
 
     public async Task<IEnumerable<string>> GetUserPermissionNamesAsync(int userId)
@@ -65,11 +54,11 @@ public class PermissionService : IPermissionService
 
     public async Task<IEnumerable<MenuItem>> GetAuthorizedMenuItemsAsync(int userId)
     {
-        string cacheKey = $"{MENU_CACHE_KEY_PREFIX}{userId}";
+        var cacheKey = $"{MENU_CACHE_KEY_PREFIX}{userId}";
 
-        if (!_cache.TryGetValue(cacheKey, out IEnumerable<MenuItem> menuItems))
+        if (!cache.TryGetValue(cacheKey, out IEnumerable<MenuItem> menuItems))
         {
-            var user = await _userRepository.GetUserWithRolesAsync(userId);
+            var user = await userRepository.GetUserWithRolesAsync(userId);
             if (user == null)
                 return Enumerable.Empty<MenuItem>();
 
@@ -77,7 +66,7 @@ public class PermissionService : IPermissionService
 
             foreach (var userRole in user.UserRoles)
             {
-                var roleMenuItems = await _menuItemRepository.GetVisibleMenuItemsForRoleAsync(userRole.RoleId);
+                var roleMenuItems = await menuItemRepository.GetVisibleMenuItemsForRoleAsync(userRole.RoleId);
                 allMenuItems.AddRange(roleMenuItems);
             }
 
@@ -87,9 +76,9 @@ public class PermissionService : IPermissionService
             // Order by ParentId first, then DisplayOrder
             menuItems = menuItems.OrderBy(m => m.ParentId).ThenBy(m => m.DisplayOrder).ToList();
 
-            _cache.Set(cacheKey, menuItems, CACHE_DURATION);
+            cache.Set(cacheKey, menuItems, CACHE_DURATION);
         }
 
-        return menuItems;
+        return menuItems ?? Array.Empty<MenuItem>();
     }
 }

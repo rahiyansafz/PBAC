@@ -5,20 +5,20 @@ namespace AccessManagementAPI.Core.Services;
 
 public class EmailService : IEmailService
 {
+    private readonly string? _baseUrl;
     private readonly IConfiguration _configuration;
-    private readonly string _fromEmail;
-    private readonly string _smtpServer;
+    private readonly string? _fromEmail;
+    private readonly string? _smtpPassword;
     private readonly int _smtpPort;
-    private readonly string _smtpUsername;
-    private readonly string _smtpPassword;
-    private readonly string _baseUrl;
+    private readonly string? _smtpServer;
+    private readonly string? _smtpUsername;
 
     public EmailService(IConfiguration configuration)
     {
         _configuration = configuration;
         _fromEmail = _configuration["Email:From"];
         _smtpServer = _configuration["Email:SmtpServer"];
-        _smtpPort = int.Parse(_configuration["Email:SmtpPort"]);
+        _smtpPort = int.Parse(_configuration["Email:SmtpPort"] ?? string.Empty);
         _smtpUsername = _configuration["Email:Username"];
         _smtpPassword = _configuration["Email:Password"];
         _baseUrl = _configuration["Application:BaseUrl"];
@@ -32,17 +32,20 @@ public class EmailService : IEmailService
             EnableSsl = true
         };
 
-        var message = new MailMessage
+        if (_fromEmail != null)
         {
-            From = new MailAddress(_fromEmail),
-            Subject = subject,
-            Body = htmlMessage,
-            IsBodyHtml = true
-        };
+            var message = new MailMessage
+            {
+                From = new MailAddress(_fromEmail),
+                Subject = subject,
+                Body = htmlMessage,
+                IsBodyHtml = true
+            };
 
-        message.To.Add(new MailAddress(to));
+            message.To.Add(new MailAddress(to));
 
-        await client.SendMailAsync(message);
+            await client.SendMailAsync(message);
+        }
     }
 
     public async Task SendVerificationEmailAsync(string to, string userId, string token)

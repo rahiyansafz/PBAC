@@ -1,41 +1,31 @@
-﻿using System.ComponentModel.DataAnnotations;
-using AccessManagementAPI.Core.Authorization;
+﻿using AccessManagementAPI.Core.Authorization;
 using AccessManagementAPI.Core.Interfaces;
 using AccessManagementAPI.Core.Models;
+using AccessManagementAPI.Dtos.MenuItems;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AccessManagementAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class MenuItemsController : ControllerBase
+public class MenuItemsController(IMenuItemRepository menuItemRepository) : ControllerBase
 {
-    private readonly IMenuItemRepository _menuItemRepository;
-
-    public MenuItemsController(IMenuItemRepository menuItemRepository)
-    {
-        _menuItemRepository = menuItemRepository;
-    }
-
     // GET: api/menuitems
     [HttpGet]
     [HasPermission("menus.manage")]
     public async Task<ActionResult<IEnumerable<MenuItem>>> GetMenuItems()
     {
-        var menuItems = await _menuItemRepository.GetAllAsync();
+        var menuItems = await menuItemRepository.GetAllAsync();
         return Ok(menuItems);
     }
 
     // GET: api/menuitems/5
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     [HasPermission("menus.manage")]
     public async Task<ActionResult<MenuItem>> GetMenuItem(int id)
     {
-        var menuItem = await _menuItemRepository.GetByIdAsync(id);
-        if (menuItem == null)
-        {
-            return NotFound();
-        }
+        var menuItem = await menuItemRepository.GetByIdAsync(id);
+        if (menuItem == null) return NotFound();
 
         return Ok(menuItem);
     }
@@ -45,16 +35,16 @@ public class MenuItemsController : ControllerBase
     [HasPermission("menus.manage")]
     public async Task<ActionResult<IEnumerable<MenuItem>>> GetTopLevelMenuItems()
     {
-        var menuItems = await _menuItemRepository.GetTopLevelMenuItemsAsync();
+        var menuItems = await menuItemRepository.GetTopLevelMenuItemsAsync();
         return Ok(menuItems);
     }
 
     // GET: api/menuitems/parent/5
-    [HttpGet("parent/{parentId}")]
+    [HttpGet("parent/{parentId:int}")]
     [HasPermission("menus.manage")]
     public async Task<ActionResult<IEnumerable<MenuItem>>> GetMenuItemsByParent(int parentId)
     {
-        var menuItems = await _menuItemRepository.GetMenuItemsWithParentAsync(parentId);
+        var menuItems = await menuItemRepository.GetMenuItemsWithParentAsync(parentId);
         return Ok(menuItems);
     }
 
@@ -75,20 +65,17 @@ public class MenuItemsController : ControllerBase
             RequiredPermissionSystemName = menuItemDto.RequiredPermissionSystemName
         };
 
-        var createdMenuItem = await _menuItemRepository.AddAsync(menuItem);
+        var createdMenuItem = await menuItemRepository.AddAsync(menuItem);
         return CreatedAtAction(nameof(GetMenuItem), new { id = createdMenuItem.Id }, createdMenuItem);
     }
 
     // PUT: api/menuitems/5
-    [HttpPut("{id}")]
+    [HttpPut("{id:int}")]
     [HasPermission("menus.manage")]
     public async Task<IActionResult> UpdateMenuItem(int id, [FromBody] MenuItemUpdateDto menuItemDto)
     {
-        var existingMenuItem = await _menuItemRepository.GetByIdAsync(id);
-        if (existingMenuItem == null)
-        {
-            return NotFound();
-        }
+        var existingMenuItem = await menuItemRepository.GetByIdAsync(id);
+        if (existingMenuItem == null) return NotFound();
 
         existingMenuItem.Name = menuItemDto.Name;
         existingMenuItem.DisplayName = menuItemDto.DisplayName;
@@ -99,68 +86,25 @@ public class MenuItemsController : ControllerBase
         existingMenuItem.IsVisible = menuItemDto.IsVisible;
         existingMenuItem.RequiredPermissionSystemName = menuItemDto.RequiredPermissionSystemName;
 
-        await _menuItemRepository.UpdateAsync(existingMenuItem);
+        await menuItemRepository.UpdateAsync(existingMenuItem);
         return NoContent();
     }
 
     // DELETE: api/menuitems/5
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:int}")]
     [HasPermission("menus.manage")]
     public async Task<IActionResult> DeleteMenuItem(int id)
     {
-        var menuItem = await _menuItemRepository.GetByIdAsync(id);
-        if (menuItem == null)
-        {
-            return NotFound();
-        }
+        var menuItem = await menuItemRepository.GetByIdAsync(id);
+        if (menuItem == null) return NotFound();
 
         // Check if there are any children of this menu item
-        var children = await _menuItemRepository.GetMenuItemsWithParentAsync(id);
+        var children = await menuItemRepository.GetMenuItemsWithParentAsync(id);
         if (children.Any())
-        {
             return BadRequest(
                 "Cannot delete a menu item with children. Delete children first or reassign them to another parent.");
-        }
 
-        await _menuItemRepository.DeleteAsync(menuItem);
+        await menuItemRepository.DeleteAsync(menuItem);
         return NoContent();
     }
-}
-
-public class MenuItemCreateDto
-{
-    [Required] [StringLength(50)] public string Name { get; set; } = string.Empty;
-
-    [Required] [StringLength(50)] public string DisplayName { get; set; } = string.Empty;
-
-    [Required] [StringLength(255)] public string Url { get; set; } = string.Empty;
-
-    [StringLength(50)] public string Icon { get; set; } = string.Empty;
-
-    public int ParentId { get; set; } = 0;
-
-    public int DisplayOrder { get; set; } = 0;
-
-    public bool IsVisible { get; set; } = true;
-
-    [StringLength(50)] public string RequiredPermissionSystemName { get; set; } = string.Empty;
-}
-
-public class MenuItemUpdateDto
-{
-    [Required] [StringLength(50)] public string Name { get; set; } = string.Empty;
-
-    [Required] [StringLength(50)] public string DisplayName { get; set; } = string.Empty;
-
-    [Required] [StringLength(255)] public string Url { get; set; } = string.Empty;
-
-    [StringLength(50)] public string Icon { get; set; } = string.Empty;
-
-    public int ParentId { get; set; } = 0;
-
-    public int DisplayOrder { get; set; } = 0;
-
-    public bool IsVisible { get; set; } = true;
-
-    [StringLength(50)] public string RequiredPermissionSystemName { get; set; } = string.Empty;
 }

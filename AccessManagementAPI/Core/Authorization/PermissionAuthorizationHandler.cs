@@ -4,40 +4,22 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace AccessManagementAPI.Core.Authorization;
 
-public class PermissionAuthorizationHandler : AuthorizationHandler<PermissionRequirement>
+public class PermissionAuthorizationHandler(
+    IPermissionService permissionService,
+    IHttpContextAccessor httpContextAccessor)
+    : AuthorizationHandler<PermissionRequirement>
 {
-    private readonly IPermissionService _permissionService;
-    private readonly IHttpContextAccessor _httpContextAccessor;
-
-    public PermissionAuthorizationHandler(
-        IPermissionService permissionService,
-        IHttpContextAccessor httpContextAccessor)
-    {
-        _permissionService = permissionService;
-        _httpContextAccessor = httpContextAccessor;
-    }
-
     protected override async Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
         PermissionRequirement requirement)
     {
-        if (context.User == null || !context.User.Identity!.IsAuthenticated)
-        {
-            return;
-        }
+        if (!context.User.Identity!.IsAuthenticated) return;
 
         var userIdClaim = context.User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null)
-        {
-            return;
-        }
+        if (userIdClaim == null) return;
 
-        if (int.TryParse(userIdClaim.Value, out int userId))
-        {
-            if (await _permissionService.HasPermissionAsync(userId, requirement.Permission))
-            {
+        if (int.TryParse(userIdClaim.Value, out var userId))
+            if (await permissionService.HasPermissionAsync(userId, requirement.Permission))
                 context.Succeed(requirement);
-            }
-        }
     }
 }

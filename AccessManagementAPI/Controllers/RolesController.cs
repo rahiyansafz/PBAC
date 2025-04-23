@@ -1,57 +1,44 @@
-﻿using System.ComponentModel.DataAnnotations;
-using AccessManagementAPI.Core.Authorization;
+﻿using AccessManagementAPI.Core.Authorization;
 using AccessManagementAPI.Core.Models;
 using AccessManagementAPI.Core.Services;
+using AccessManagementAPI.Dtos.Roles;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AccessManagementAPI.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class RolesController : ControllerBase
+public class RolesController(IRoleService roleService) : ControllerBase
 {
-    private readonly IRoleService _roleService;
-
-    public RolesController(IRoleService roleService)
-    {
-        _roleService = roleService;
-    }
-
     // GET: api/roles
     [HttpGet]
     [HasPermission("roles.view")]
     public async Task<ActionResult<IEnumerable<Role>>> GetRoles()
     {
-        var roles = await _roleService.GetAllRolesAsync();
+        var roles = await roleService.GetAllRolesAsync();
         return Ok(roles);
     }
 
     // GET: api/roles/5
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     [HasPermission("roles.view")]
     public async Task<ActionResult<Role>> GetRole(int id)
     {
-        var role = await _roleService.GetRoleByIdAsync(id);
-        if (role == null)
-        {
-            return NotFound();
-        }
+        var role = await roleService.GetRoleByIdAsync(id);
+        if (role == null) return NotFound();
 
         return Ok(role);
     }
 
     // GET: api/roles/5/permissions
-    [HttpGet("{id}/permissions")]
+    [HttpGet("{id:int}/permissions")]
     [HasPermission("roles.view")]
     public async Task<ActionResult<IEnumerable<Permission>>> GetRolePermissions(int id)
     {
-        var role = await _roleService.GetRoleByIdAsync(id);
-        if (role == null)
-        {
-            return NotFound();
-        }
+        var role = await roleService.GetRoleByIdAsync(id);
+        if (role == null) return NotFound();
 
-        var permissions = await _roleService.GetRolePermissionsAsync(id);
+        var permissions = await roleService.GetRolePermissionsAsync(id);
         return Ok(permissions);
     }
 
@@ -68,144 +55,100 @@ public class RolesController : ControllerBase
             IsSystemRole = false
         };
 
-        var createdRole = await _roleService.CreateRoleAsync(role);
+        var createdRole = await roleService.CreateRoleAsync(role);
         return CreatedAtAction(nameof(GetRole), new { id = createdRole.Id }, createdRole);
     }
 
     // PUT: api/roles/5
-    [HttpPut("{id}")]
+    [HttpPut("{id:int}")]
     [HasPermission("roles.edit")]
     public async Task<IActionResult> UpdateRole(int id, [FromBody] RoleUpdateDto roleDto)
     {
-        var existingRole = await _roleService.GetRoleByIdAsync(id);
-        if (existingRole == null)
-        {
-            return NotFound();
-        }
+        var existingRole = await roleService.GetRoleByIdAsync(id);
+        if (existingRole == null) return NotFound();
 
         if (existingRole.IsSystemRole && existingRole.SystemName != roleDto.SystemName)
-        {
             return BadRequest("Cannot change the SystemName of a system role");
-        }
 
         existingRole.Name = roleDto.Name;
         existingRole.SystemName = roleDto.SystemName;
         existingRole.Description = roleDto.Description;
 
-        await _roleService.UpdateRoleAsync(existingRole);
+        await roleService.UpdateRoleAsync(existingRole);
         return NoContent();
     }
 
     // DELETE: api/roles/5
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:int}")]
     [HasPermission("roles.delete")]
     public async Task<IActionResult> DeleteRole(int id)
     {
-        var role = await _roleService.GetRoleByIdAsync(id);
-        if (role == null)
-        {
-            return NotFound();
-        }
+        var role = await roleService.GetRoleByIdAsync(id);
+        if (role == null) return NotFound();
 
-        if (role.IsSystemRole)
-        {
-            return BadRequest("Cannot delete a system role");
-        }
+        if (role.IsSystemRole) return BadRequest("Cannot delete a system role");
 
-        await _roleService.DeleteRoleAsync(id);
+        await roleService.DeleteRoleAsync(id);
         return NoContent();
     }
 
     // POST: api/roles/5/permissions
-    [HttpPost("{roleId}/permissions/{permissionId}")]
+    [HttpPost("{roleId:int}/permissions/{permissionId:int}")]
     [HasPermission("permissions.assign")]
     public async Task<IActionResult> AddPermissionToRole(int roleId, int permissionId)
     {
-        var role = await _roleService.GetRoleByIdAsync(roleId);
-        if (role == null)
-        {
-            return NotFound("Role not found");
-        }
+        var role = await roleService.GetRoleByIdAsync(roleId);
+        if (role == null) return NotFound("Role not found");
 
-        await _roleService.AddPermissionToRoleAsync(roleId, permissionId);
+        await roleService.AddPermissionToRoleAsync(roleId, permissionId);
         return NoContent();
     }
 
     // DELETE: api/roles/5/permissions/3
-    [HttpDelete("{roleId}/permissions/{permissionId}")]
+    [HttpDelete("{roleId:int}/permissions/{permissionId:int}")]
     [HasPermission("permissions.assign")]
     public async Task<IActionResult> RemovePermissionFromRole(int roleId, int permissionId)
     {
-        var role = await _roleService.GetRoleByIdAsync(roleId);
-        if (role == null)
-        {
-            return NotFound("Role not found");
-        }
+        var role = await roleService.GetRoleByIdAsync(roleId);
+        if (role == null) return NotFound("Role not found");
 
-        await _roleService.RemovePermissionFromRoleAsync(roleId, permissionId);
+        await roleService.RemovePermissionFromRoleAsync(roleId, permissionId);
         return NoContent();
     }
 
     // GET: api/roles/5/users
-    [HttpGet("{roleId}/users")]
+    [HttpGet("{roleId:int}/users")]
     [HasPermission("roles.view")]
     public async Task<ActionResult<IEnumerable<User>>> GetUsersInRole(int roleId)
     {
-        var role = await _roleService.GetRoleByIdAsync(roleId);
-        if (role == null)
-        {
-            return NotFound("Role not found");
-        }
+        var role = await roleService.GetRoleByIdAsync(roleId);
+        if (role == null) return NotFound("Role not found");
 
-        var users = await _roleService.GetUsersInRoleAsync(roleId);
+        var users = await roleService.GetUsersInRoleAsync(roleId);
         return Ok(users);
     }
 
     // POST: api/roles/5/users/3
-    [HttpPost("{roleId}/users/{userId}")]
+    [HttpPost("{roleId:int}/users/{userId:int}")]
     [HasPermission("roles.edit")]
     public async Task<IActionResult> AddUserToRole(int roleId, int userId)
     {
-        var role = await _roleService.GetRoleByIdAsync(roleId);
-        if (role == null)
-        {
-            return NotFound("Role not found");
-        }
+        var role = await roleService.GetRoleByIdAsync(roleId);
+        if (role == null) return NotFound("Role not found");
 
-        await _roleService.AddUserToRoleAsync(userId, roleId);
+        await roleService.AddUserToRoleAsync(userId, roleId);
         return NoContent();
     }
 
     // DELETE: api/roles/5/users/3
-    [HttpDelete("{roleId}/users/{userId}")]
+    [HttpDelete("{roleId:int}/users/{userId:int}")]
     [HasPermission("roles.edit")]
     public async Task<IActionResult> RemoveUserFromRole(int roleId, int userId)
     {
-        var role = await _roleService.GetRoleByIdAsync(roleId);
-        if (role == null)
-        {
-            return NotFound("Role not found");
-        }
+        var role = await roleService.GetRoleByIdAsync(roleId);
+        if (role == null) return NotFound("Role not found");
 
-        await _roleService.RemoveUserFromRoleAsync(userId, roleId);
+        await roleService.RemoveUserFromRoleAsync(userId, roleId);
         return NoContent();
     }
-}
-
-public class RoleCreateDto
-{
-    [Required] [StringLength(50)] public string Name { get; set; } = string.Empty;
-
-    [Required] [StringLength(50)] public string SystemName { get; set; } = string.Empty;
-
-    [StringLength(255)] public string Description { get; set; } = string.Empty;
-}
-
-public class RoleUpdateDto
-{
-    [Required] [StringLength(50)] public string Name { get; set; } = string.Empty;
-
-    [Required] [StringLength(50)] public string SystemName { get; set; } = string.Empty;
-
-    [StringLength(255)] public string Description { get; set; } = string.Empty;
 }
