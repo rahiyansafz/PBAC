@@ -241,7 +241,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 Username = "admin",
                 Email = "admin@example.com",
                 // BCrypt hash for "Admin@123"
-                PasswordHash = "$2a$11$ysX3ykS8fYQfDmPFKPYj4eQCsJJXBgT3UfQoDQtfF.1c1HnCyjXwm",
+                PasswordHash = "$2a$11$foUzva/XWCdpfEacJDSV6ucuXUq6UKG7WZS9BM0bBxZA1QSe0V8ZK",
                 IsActive = true,
                 EmailConfirmed = true, // Mark email as confirmed for admin user
                 EmailVerificationToken = null,

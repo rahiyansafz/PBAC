@@ -4,6 +4,7 @@ using AccessManagementAPI.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AccessManagementAPI.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250513114325_default user pass hash")]
+    partial class defaultuserpasshash
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -587,7 +590,7 @@ namespace AccessManagementAPI.Migrations
                             Email = "admin@example.com",
                             EmailConfirmed = true,
                             IsActive = true,
-                            PasswordHash = "$2a$11$foUzva/XWCdpfEacJDSV6ucuXUq6UKG7WZS9BM0bBxZA1QSe0V8ZK",
+                            PasswordHash = "$2a$11$vLWt0GGw4fmYbKjpXWyryOucFhPUOX/ylJzg6FFV0FdqAibOBVpOi",
                             Username = "admin"
                         });
                 });
